@@ -5,6 +5,8 @@ from app.blueprints.main import main
 from flask import request, jsonify, abort
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 
+# instantiate server objects
+# TODO: save server objects in database/cache
 server_objects = {}
 
 
