@@ -95,6 +95,10 @@ def get_databases():
         databases = server.list_databases()
         return jsonify({'databases': [database.name for database in databases]}), 200
 
+    # else return error
+    else:
+        return jsonify({'message': 'Access token is invalid'}), 401
+
 
 @main.route('/models', methods=['PUT'])
 def create_model():
