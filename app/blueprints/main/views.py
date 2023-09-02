@@ -3,6 +3,9 @@ import mindsdb_sdk
 from requests.exceptions import HTTPError
 from app.blueprints.main import main
 from flask import request, jsonify, abort
+from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
+
+server_objects = {}
 
 
 @main.route('/login', methods=['POST'])
@@ -21,8 +24,14 @@ def login():
     # if login and password are not empty, try to connect
     if login and password:
         try:
+            # connect to mindsdb server and generate access token
             server = mindsdb_sdk.connect(login=login, password=password)
-            return jsonify({'message': 'Login successful'}), 200
+            access_token = create_access_token(identity=login)
+
+            # save server object
+            server_objects[login] = server
+
+            return jsonify({'message': 'Login successful', 'access_token': access_token}), 200
         except HTTPError as e:
             logging.error(e)
             return jsonify({'message': 'Login unsuccessful'}), 401
