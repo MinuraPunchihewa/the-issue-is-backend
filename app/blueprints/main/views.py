@@ -21,11 +21,12 @@ def login():
     # if login and password are not empty, try to connect
     if login and password:
         try:
-            server = mindsdb_sdk.connect(login, password)
+            server = mindsdb_sdk.connect(login=login, password=password)
             return jsonify({'message': 'Login successful'}), 200
         except HTTPError as e:
             logging.error(e)
             return jsonify({'message': 'Login unsuccessful'}), 401
+
     # else return error
     else:
         return jsonify({'message': 'Either the login or password has not been provided'}), 400
