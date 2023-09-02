@@ -47,8 +47,18 @@ def create_database():
 
 
 @main.route('/databases', methods=['GET'])
+@jwt_required()
 def get_databases():
-    pass
+    # get login from jwt
+    login = get_jwt_identity()
+
+    # get server object
+    server = server_objects.get(login)
+
+    # if server object exists, get databases
+    if server:
+        databases = server.list_databases()
+        return jsonify({'databases': [database.name for database in databases]}), 200
 
 
 @main.route('/models', methods=['PUT'])
