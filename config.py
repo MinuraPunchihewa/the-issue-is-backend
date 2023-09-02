@@ -7,6 +7,7 @@ load_dotenv()
 # create the base config
 class Config(object):
     SECRET_KEY = os.environ.get('SECRET_KEY')
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
 
 
 # create the development config
