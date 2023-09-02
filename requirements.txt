@@ -1,2 +1,3 @@
 flask
 mindsdb_sdk
+flask_jwt_extended
