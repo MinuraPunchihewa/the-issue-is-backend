@@ -1,1 +1,1 @@
-from main import main
+from app.blueprints.main import main

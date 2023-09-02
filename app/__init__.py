@@ -7,7 +7,7 @@ def create_app(config=DevelopmentConfig):
     app.config.from_object(config)
 
     # register main blueprint
-    from app.main import main as main_bp
+    from app.blueprints import main as main_bp
     app.register_blueprint(main_bp)
 
     return app
