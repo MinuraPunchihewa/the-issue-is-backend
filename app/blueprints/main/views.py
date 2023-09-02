@@ -1,11 +1,34 @@
+import logging
+import mindsdb_sdk
+from urllib.error import HTTPError
 from app.blueprints.main import main
 from flask import request, jsonify, abort
-import logging
 
 
 @main.route('/login', methods=['POST'])
 def login():
-    pass
+    # if request is json, get data from json
+    if request.is_json:
+        request_data = request.get_json()
+        login = request_data.get('login')
+        password = request_data.get('password')
+
+    # else get data from form
+    else:
+        login = request.form.get('login')
+        password = request.form.get('password')
+
+    # if login and password are not empty, try to connect
+    if login and password:
+        try:
+            server = mindsdb_sdk.connect(login, password)
+            return jsonify({'message': 'Login successful'}), 200
+        except HTTPError as e:
+            logging.error(e)
+            return jsonify({'message': 'Login unsuccessful'}), 401
+    # else return error
+    else:
+        return jsonify({'message': 'Either the login or password has not been provided'}), 400
 
 
 @main.route('/databases', methods=['PUT'])
