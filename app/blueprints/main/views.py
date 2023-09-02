@@ -1,6 +1,6 @@
 import logging
 import mindsdb_sdk
-from urllib.error import HTTPError
+from requests.exceptions import HTTPError
 from app.blueprints.main import main
 from flask import request, jsonify, abort
 
