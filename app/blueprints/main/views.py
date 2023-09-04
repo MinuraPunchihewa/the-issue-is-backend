@@ -116,11 +116,12 @@ def create_model():
             # get the project object
             project = server.get_project(name=project_name)
 
-            # get the prompt template from the app config
-            prompt_template = current_app.config['PROMPT_TEMPLATE']
+            # get the OpenAI integration options from the app config
+            max_tokens = current_app.config['OPENAI_MAX_TOKENS']
+            prompt_template = current_app.config['OPENAI_PROMPT_TEMPLATE']
 
             # create model
-            project.create_model(name=model_name, engine='openai', predict='generated_issue', options={'prompt_template': prompt_template})
+            project.create_model(name=model_name, engine='openai', predict='generated_issue', options={'prompt_template': prompt_template, 'max_tokens': max_tokens})
             return jsonify({'message': f'Model {model_name} created'}), 200
 
         # else return error
