@@ -158,6 +158,54 @@ def get_models():
 def create_issue():
     pass
 
-@main.route('/issues/description', methods=['PUT'])
+@main.route('/issues/description', methods=['POST'])
+@jwt_required()
 def generate_issue_description():
-    pass
+    # get server object
+    server = mindsdb_login_manager.get_server_connection_for_login()
+
+    # if server object exists, get models
+    if server:
+        # if request is json, get data from json
+        if request.is_json:
+            request_data = request.get_json()
+            project_name = request_data.get('project_name') if request_data.get('project_name') else 'mindsdb'
+            model_name = request_data.get('model_name')
+            title = request_data.get('title')
+            description = request_data.get('description')
+            sections = request_data.get('sections')
+            lingo = request_data.get('lingo')
+            style = request_data.get('style')
+
+        # else get data from form
+        else:
+            project_name = request.form.get('project_name') if request.form.get('project_name') else 'mindsdb'
+            model_name = request.form.get('model_name')
+            title = request.form.get('title')
+            description = request.form.get('description')
+            sections = request.form.get('sections')
+            lingo = request.form.get('lingo')
+            style = request.form.get('style')
+
+    
+        # if model_name, title, description, sections, lingo and style are not empty, generate issue description
+        if model_name and title and description and sections and lingo and style:
+            try:
+                # get the project object
+                project = server.get_project(name=project_name)
+            except AttributeError as e:
+                logging.error(e)
+                return jsonify({'message': 'Project does not exist'}), 404
+            
+            try:
+                # get the model object
+                model = project.get_model(name=model_name)
+            except AttributeError as e:
+                logging.error(e)
+                return jsonify({'message': 'Model does not exist'}), 404
+            
+            # generate issue description
+            result_df = model.predict(data={'title': title, 'description': description, 'sections': sections, 'lingo': lingo, 'style': style})
+            generated_issue_description = result_df.iloc[0]['generated_issue']
+
+            return jsonify({'generated_issue_description': generated_issue_description}), 200
