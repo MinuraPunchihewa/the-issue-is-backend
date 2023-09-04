@@ -1,5 +1,5 @@
 import logging
-from flask import request, jsonify
+from flask import request, jsonify, current_app
 from app.blueprints.main import main
 from requests.exceptions import HTTPError
 from app.blueprints.main.mindsdb_login_manager import MindsDBLoginManager
@@ -92,8 +92,39 @@ def get_databases():
 
 
 @main.route('/models', methods=['PUT'])
+@jwt_required()
 def create_model():
-    pass
+    # get server object
+    server = mindsdb_login_manager.get_server_connection_for_login()
+
+    # if server object exists, create model
+    if server:
+        # if request is json, get data from json
+        if request.is_json:
+            request_data = request.get_json()
+            project_name = request_data.get('project_name') if request_data.get('project_name') else 'mindsdb'
+            model_name = request_data.get('model_name')
+            
+        # else get data from form
+        else:
+            project_name = request.form.get('project_name') if request.form.get('project_name') else 'mindsdb'
+            model_name = request.form.get('model_name')
+
+        # if model_name and database_name are not empty, create model
+        if model_name:
+            # get the project object
+            project = server.get_project(name=project_name)
+
+            # get the prompt template from the app config
+            prompt_template = current_app.config['PROMPT_TEMPLATE']
+
+            # create model
+            project.create_model(name=model_name, engine='openai', predict='generated_issue', options={'prompt_template': prompt_template})
+            return jsonify({'message': f'Model {model_name} created'}), 200
+
+        # else return error
+        else:
+            return jsonify({'message': 'Model name has not been provided'}), 400
 
 
 @main.route('/models', methods=['GET'])
