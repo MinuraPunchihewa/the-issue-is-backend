@@ -8,13 +8,14 @@ load_dotenv()
 class Config(object):
     SECRET_KEY = os.environ.get('SECRET_KEY')
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
-    PROMPT_TEMPLATE = """"""
+    OPENAI_PROMPT_TEMPLATE = """"""
+    OPENAI_MAX_TOKENS = 1024
 
 
 # create the development config
 class DevelopmentConfig(Config):
     DEBUG = True
-    PROMPT_TEMPLATE = """
+    OPENAI_PROMPT_TEMPLATE = """
     You are a GitHub user and you want to create a new issue. You will be given a title and a description.
     You are required to elaborate on the issue by providing the following sections: {{sections}}.
 
@@ -31,9 +32,9 @@ class DevelopmentConfig(Config):
 
 # create the production config
 class ProductionConfig(Config):
-    PROMPT_TEMPLATE = """"""
+    OPENAI_PROMPT_TEMPLATE = """"""
 
 
 # create the testing config
 class TestingConfig(Config):
-    PROMPT_TEMPLATE = """"""
+    OPENAI_PROMPT_TEMPLATE = """"""
