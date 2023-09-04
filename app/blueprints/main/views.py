@@ -1,3 +1,4 @@
+import ast
 import logging
 from flask import request, jsonify, current_app
 from app.blueprints.main import main
@@ -154,10 +155,6 @@ def get_models():
         return jsonify({'message': 'Access token is invalid'}), 401
     
 
-@main.route('/issues', methods=['PUT'])
-def create_issue():
-    pass
-
 @main.route('/issues/description', methods=['POST'])
 @jwt_required()
 def generate_issue_description():
@@ -206,6 +203,11 @@ def generate_issue_description():
             
             # generate issue description
             result_df = model.predict(data={'title': title, 'description': description, 'sections': sections, 'lingo': lingo, 'style': style})
-            generated_issue_description = result_df.iloc[0]['generated_issue']
+            response = ast.literal_eval(result_df.iloc[0]['generated_issue'])
 
-            return jsonify({'generated_issue_description': generated_issue_description}), 200
+            return jsonify(response), 200
+        
+
+@main.route('/issues', methods=['PUT'])
+def create_issue():
+    pass
