@@ -23,7 +23,9 @@ class DevelopmentConfig(Config):
     You should provide clear instructions, carefully craft descriptions, and use structured formatting.
 
     Title: '{{title}}'
-    Description: '{{description}}'.
+    Description: '{{description}}'
+
+    Format your response as a JSON object with the various sections as the keys, including the title.
     """
 
 
