@@ -105,6 +105,36 @@ def create_model():
     pass
 
 
+@main.route('/models', methods=['GET'])
+@jwt_required()
+def get_models():
+    # get login from jwt
+    login = get_jwt_identity()
+
+    # get server object
+    server = server_objects.get(login)
+
+    # if server object exists, get models
+    if server:
+        # get the project name from the query string
+        project_name = request.args.get('project_name') if request.args.get('project_name') else 'mindsdb'
+
+        try:
+            # get the project object
+            project = server.get_project(name=project_name)
+        except AttributeError as e:
+            logging.error(e)
+            return jsonify({'message': 'Project does not exist'}), 404
+
+        # get the models of the project
+        models = project.list_models()
+        return jsonify({'databases': [model.name for model in models]}), 200
+
+    # else return error
+    else:
+        return jsonify({'message': 'Access token is invalid'}), 401
+    
+
 @main.route('/issues', methods=['PUT'])
 def create_issue():
     pass
