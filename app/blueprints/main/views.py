@@ -1,13 +1,13 @@
 import logging
-import mindsdb_sdk
-from requests.exceptions import HTTPError
+from flask import request, jsonify
 from app.blueprints.main import main
-from flask import request, jsonify, abort
-from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
+from requests.exceptions import HTTPError
+from app.blueprints.main.mindsdb_login_manager import MindsDBLoginManager
+from flask_jwt_extended import jwt_required, create_access_token
 
-# instantiate server objects
-# TODO: save server objects in database/cache
-server_objects = {}
+
+# create mindsdb login manager object for managing mindsdb server connections
+mindsdb_login_manager = MindsDBLoginManager()
 
 
 @main.route('/login', methods=['POST'])
@@ -27,11 +27,8 @@ def login():
     if login and password:
         try:
             # connect to mindsdb server and generate access token
-            server = mindsdb_sdk.connect(login=login, password=password)
+            mindsdb_login_manager.login(login=login, password=password)
             access_token = create_access_token(identity=login)
-
-            # save server object
-            server_objects[login] = server
 
             return jsonify({'message': 'Login successful', 'access_token': access_token}), 200
         except HTTPError as e:
@@ -46,11 +43,8 @@ def login():
 @main.route('/databases', methods=['PUT'])
 @jwt_required()
 def create_database():
-    # get login from jwt
-    login = get_jwt_identity()
-
     # get server object
-    server = server_objects.get(login)
+    server = mindsdb_login_manager.get_server_connection_for_login()
 
     # if server object exists, create database
     if server:
@@ -84,11 +78,8 @@ def create_database():
 @main.route('/databases', methods=['GET'])
 @jwt_required()
 def get_databases():
-    # get login from jwt
-    login = get_jwt_identity()
-
     # get server object
-    server = server_objects.get(login)
+    server = mindsdb_login_manager.get_server_connection_for_login()
 
     # if server object exists, get databases
     if server:
@@ -108,11 +99,8 @@ def create_model():
 @main.route('/models', methods=['GET'])
 @jwt_required()
 def get_models():
-    # get login from jwt
-    login = get_jwt_identity()
-
     # get server object
-    server = server_objects.get(login)
+    server = mindsdb_login_manager.get_server_connection_for_login()
 
     # if server object exists, get models
     if server:
