@@ -1,7 +1,8 @@
 import os
-from dotenv import load_dotenv
+# uncomment the lines below if you want to use .env file
+# from dotenv import load_dotenv
 
-load_dotenv()
+# load_dotenv()
 
 
 # create the base config
