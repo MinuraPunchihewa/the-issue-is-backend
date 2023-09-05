@@ -1,3 +1,4 @@
 flask
 mindsdb_sdk
+waitress
 flask_jwt_extended
