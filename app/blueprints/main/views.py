@@ -26,14 +26,13 @@ def login():
 
     # if login and password are not empty, try to connect
     if login and password:
-        try:
-            # connect to mindsdb server and generate access token
-            mindsdb_login_manager.login(login=login, password=password)
+        # if login is successful, return access token
+        if mindsdb_login_manager.login(login=login, password=password):
             access_token = create_access_token(identity=login)
-
             return jsonify({'message': 'Login successful', 'access_token': access_token}), 200
-        except HTTPError as e:
-            logging.error(e)
+        
+        # else return error
+        else:
             return jsonify({'message': 'Login unsuccessful'}), 401
 
     # else return error
