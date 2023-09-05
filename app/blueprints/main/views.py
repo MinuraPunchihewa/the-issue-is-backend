@@ -243,13 +243,21 @@ def create_issue():
         # if database_name, title and description are not empty, create issue
         if database_name and title and description:
             # get the database object
-            database = server.get_database(name=database_name)
+            try:
+                database = server.get_database(name=database_name)
+            except AttributeError as e:
+                logging.error(e)
+                return jsonify({'message': 'Database does not exist'}), 404
 
             # create the query
             query = database.query(f'INSERT INTO issues (title, body) VALUES ("{title}", "{description}")')
 
             # create the issue
-            query.fetch()
+            try:
+                query.fetch()
+            except RuntimeError as e:
+                logging.error(e)
+                return jsonify({'message': f'Issue could not be created: {e}'}), 400
 
             return jsonify({'message': f'Issue "{title}" created'}), 200
         
