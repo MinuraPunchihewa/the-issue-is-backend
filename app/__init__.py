@@ -14,4 +14,8 @@ def create_app(config=DevelopmentConfig):
     from app.blueprints import main as main_bp
     app.register_blueprint(main_bp)
 
+    # register docs blueprint
+    from app.blueprints import swaggerui as docs_bp
+    app.register_blueprint(docs_bp)
+
     return app
