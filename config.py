@@ -26,7 +26,7 @@ class DevelopmentConfig(Config):
     Title: '{{title}}'
     Description: '{{description}}'
 
-    Format your response as a JSON object with the various sections as the keys, including the title.
+    Format your response as a JSON object with the various sections as the keys, including the Title.
     """
 
 

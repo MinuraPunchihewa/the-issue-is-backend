@@ -210,5 +210,42 @@ def generate_issue_description():
         
 
 @main.route('/issues', methods=['PUT'])
+@jwt_required()
 def create_issue():
-    pass
+    # get server object
+    server = mindsdb_login_manager.get_server_connection_for_login()
+
+    # if server object exists, create issue
+    if server:
+        # if request is json, get data from json
+        if request.is_json:
+            database_name = request.get_json().get('database_name')
+            title = request.get_json().get('title')
+            description = request.get_json().get('description')
+
+        # else get data from form
+        else:
+            database_name = request.form.get('database_name')
+            title = request.form.get('title')
+            description = request.form.get('description')
+
+        # if database_name, title and description are not empty, create issue
+        if database_name and title and description:
+            # get the database object
+            database = server.get_database(name=database_name)
+
+            # create the query
+            query = database.query(f'INSERT INTO issues (title, body) VALUES ("{title}", "{description}")')
+
+            # create the issue
+            query.fetch()
+
+            return jsonify({'message': f'Issue "{title}" created'}), 200
+        
+        # else return error
+        else:
+            return jsonify({'message': 'Either the database name, title or description have not been provided'}), 400
+        
+    # else return error
+    else:
+        return jsonify({'message': 'Access token is invalid'}), 401
