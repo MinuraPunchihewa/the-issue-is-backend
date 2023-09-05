@@ -67,7 +67,7 @@ This request will return a list of all the databases you have created in your Mi
 #### Models
 
 ```http
-PUT models
+PUT /models
 ```
 
 | Parameter | Type     | Description                |
