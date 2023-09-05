@@ -63,8 +63,12 @@ def create_database():
 
         # if database_name is not empty, create database
         if database_name and repository and api_key:
-            server.create_database(database_name, 'github', {'repository': repository, 'api_key': api_key})
-            return jsonify({'message': f'Database {database_name} created'}), 200
+            try:
+                server.create_database(database_name, 'github', {'repository': repository, 'api_key': api_key})
+                return jsonify({'message': f'Database {database_name} created'}), 200
+            except RuntimeError as e:
+                logging.error(e)
+                return jsonify({'message': f'Database could not be created: {e}'}), 400
 
         # else return error
         else:
