@@ -7,7 +7,7 @@ This is the backend for the 'The-Issue-Is' project. This is a Python Flask appli
 Clone the project
 
 ```bash
-  git clone https://github.com/MinuraPunchihewa/the-issue-is-backend.git
+  git clone https://github.com/The-Issue-Is/the-issue-is-backend.git
 ```
 
 Go to the project directory
@@ -25,10 +25,21 @@ Build the Docker image
 Start the server
 
 ```bash
-  docker run -p 8080:8080 the-issue-is-backend
+  docker run -p 4000:4000 the-issue-is-backend
 ```
 
 ## API Reference
+
+
+### Access Token
+```http
+POST /access_token
+```
+| Parameter | Type     | Description                                                   |
+| :-------  | :------- | :------------------------------------------------------------ |
+| `code`    | `string` | **Required**. The code to exchange for an access token.       |
+
+This endpoint retrieves an access token using a provided code. The code should be passed in the request body.
 
 #### Login
     
