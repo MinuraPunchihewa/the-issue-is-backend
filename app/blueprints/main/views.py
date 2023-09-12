@@ -5,7 +5,63 @@ from app.blueprints.main import main
 from requests.exceptions import HTTPError
 from app.blueprints.main.mindsdb_login_manager import MindsDBLoginManager
 from flask_jwt_extended import jwt_required, create_access_token
+from dotenv import dotenv_values
+from os import environ
+import logging
+import jwt
+import time
+import requests
 
+environ = dotenv_values(".env")
+
+def get_jwt_github_token():
+    PRIVATE_KEY = open(environ.get('PRIVATE_KEY_PATH')).read()
+    APP_ID = environ.get('APP_ID')
+    now = int(time.time())
+    payload = {
+        "iat": now,
+        "exp": now + (10 * 60),
+        "iss": APP_ID
+    }
+    token = jwt.encode(payload, PRIVATE_KEY, algorithm='RS256')
+    return token
+
+@main.route('/access_token', methods=['POST'])
+def get_access_token():
+    """
+    This endpoint retrieves an access token using a provided code.
+    """
+    request_data = request.get_json() if request.is_json else request.form
+
+    code = request_data.get('code')
+    if code:
+        try:
+            access_token = get_access_token_from_code(code)
+            logging.info("Access token retrieved successfully.")
+            return jsonify({'message': 'Access token retrieved', 'access_token': access_token}), 200
+        except HTTPError as e:
+            logging.error(f"HTTP error occurred: {e}")
+            return jsonify({'message': 'Access token could not be retrieved, please try again later.'}), 400
+        except Exception as e:
+            logging.error(f"An error occurred: {e}")
+            return jsonify({'message': 'An error occurred, please try again later.'}), 500
+    else:
+        return jsonify({'message': 'Code has not been provided'}), 400
+
+def get_access_token_from_code(code):
+    """
+    This function retrieves an access token using the provided code by making a POST request to GitHub.
+    """
+    url = 'https://github.com/login/oauth/access_token'
+    headers = {'Accept': 'application/json'}
+    data = {
+        'client_id': environ.get('CLIENT_ID'),
+        'client_secret': environ.get('CLIENT_SECRET'),
+        'code': code
+    }
+    response = requests.post(url, headers=headers, data=data)
+    response.raise_for_status()
+    return response.json().get('access_token')
 
 # create mindsdb login manager object for managing mindsdb server connections
 mindsdb_login_manager = MindsDBLoginManager()
