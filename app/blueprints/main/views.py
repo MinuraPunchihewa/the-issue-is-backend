@@ -239,7 +239,6 @@ def generate_issue_description():
             title = request_data.get('title')
             description = request_data.get('description')
             sections = request_data.get('sections')
-            lingo = request_data.get('lingo')
             style = request_data.get('style')
 
         # else get data from form
@@ -249,12 +248,11 @@ def generate_issue_description():
             title = request.form.get('title')
             description = request.form.get('description')
             sections = request.form.get('sections')
-            lingo = request.form.get('lingo')
             style = request.form.get('style')
 
     
         # if model_name, title, description, sections, lingo and style are not empty, generate issue description
-        if model_name and title and description and sections and lingo and style:
+        if model_name and title and description and sections and style:
             try:
                 # get the project object
                 project = server.get_project(name=project_name)
@@ -270,7 +268,7 @@ def generate_issue_description():
                 return jsonify({'message': 'Model does not exist'}), 404
             
             # generate issue description
-            result_df = model.predict(data={'title': title, 'description': description, 'sections': sections, 'lingo': lingo, 'style': style})
+            result_df = model.predict(data={'title': title, 'description': description, 'sections': sections, 'style': style})
             response = ast.literal_eval(result_df.iloc[0]['generated_issue'])
 
             return jsonify(response), 200
