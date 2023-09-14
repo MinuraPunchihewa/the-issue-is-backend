@@ -1,4 +1,3 @@
-import ast
 import logging
 from flask import request, jsonify, current_app
 from app.blueprints.main import main
@@ -269,7 +268,7 @@ def generate_issue_description():
             
             # generate issue description
             result_df = model.predict(data={'title': title, 'description': description, 'sections': sections, 'style': style})
-            response = ast.literal_eval(result_df.iloc[0]['generated_issue'])
+            response = result_df.iloc[0]['generated_issue']
 
             return jsonify(response), 200
         
