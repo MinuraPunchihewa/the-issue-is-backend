@@ -27,7 +27,7 @@ class DevelopmentConfig(Config):
     Title: '{{title}}'
     Description: '{{description}}'
 
-    Your response should be a string formatted with markdown.
+    Your response should be a string formatted with markdown syntax. Do not include any other information in your response.
     """
 
 
