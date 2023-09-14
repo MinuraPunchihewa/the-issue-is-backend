@@ -216,7 +216,7 @@ def get_models():
 
         # get the models of the project
         models = project.list_models()
-        return jsonify({'databases': [model.name for model in models]}), 200
+        return jsonify({'models': [model.name for model in models]}), 200
 
     # else return error
     else:
