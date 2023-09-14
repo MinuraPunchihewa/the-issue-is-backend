@@ -125,6 +125,5 @@ POST /issues/description
 | `title`| `string` | **Required**. The title of the issue you want to generate a description for |
 | `description`| `string` | **Required**. The description of the issue you want to improve on |
 | `sections`| `string` | **Required**. The sections you want to generate in the description for the issue |
-| `lingo`| `string` | **Required**. The lingo you want to use to generate the description for the issue |
 | `style`| `string` | **Required**. The style you want to use to generate the description for the issue |
 
