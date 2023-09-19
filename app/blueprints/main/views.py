@@ -4,6 +4,7 @@ from flask import request, jsonify, current_app
 from app.blueprints.main import main
 from requests.exceptions import HTTPError
 from app.blueprints.main.mindsdb_login_manager import MindsDBLoginManager
+from app.blueprints.main.postgres_database_manager import PostgresDatabaseManager
 from flask_jwt_extended import jwt_required, create_access_token
 from dotenv import dotenv_values
 from os import environ
@@ -16,33 +17,7 @@ import requests
 
 environ = dotenv_values(".env")
 
-DATABASE_HOST = environ.get('DATABASE_HOST')
-DATABASE_USER = environ.get('DATABASE_USER')
-DATABASE_PASSWORD = environ.get('DATABASE_PASSWORD')
-DATABASE_PORT = environ.get('DATABASE_PORT')
-DATABASE_NAME = environ.get('DATABASE_NAME')
-
-def connect_to_db():
-    try:
-        connection = psycopg2.connect(user=DATABASE_USER,
-                                      password=DATABASE_PASSWORD,
-                                      host=DATABASE_HOST,
-                                      port=DATABASE_PORT,
-                                      database=DATABASE_NAME)
-        return connection
-    except (Exception, Error) as error:
-        logging.error("Error while connecting to PostgreSQL: %s", error)
-        return None
-
-def execute_database_query(query: str, params: tuple) -> None:
-    try:
-        with connect_to_db() as connection:
-            with connection.cursor() as cursor:
-                cursor.execute(query, params)
-                connection.commit()
-    except (Exception, Error) as error:
-        logging.error("Database operation error", error)
-        connection.rollback()
+postgres_database_manager = PostgresDatabaseManager()
 
 def get_jwt_github_token():
     PRIVATE_KEY = open(environ.get('PRIVATE_KEY_PATH')).read()
@@ -74,7 +49,8 @@ def get_access_token():
 
             username = user_data.get('login')
             github_user_id = user_data.get('id')
-            write_to_database(username, github_user_id, access_token, expires_in, refresh_token, refresh_token_expires_in)
+
+            postgres_database_manager.upsert_user(username, github_user_id, access_token, expires_in, refresh_token, refresh_token_expires_in)
             logging.info("Stored user data in database successfully")
             
             return jsonify({'message': 'Access token retrieved', 'access_token': access_token, 'username': username}), 200
@@ -134,31 +110,6 @@ def get_user_information_from_token (access_token: str) -> dict:
         raise e
     else:
         return {'login': login, 'id': id}
-
-def write_to_database ( username: str, github_user_id: int, access_token: str, access_token_expires_in: int, refresh_token: str, refresh_token_expires_in: int ) -> None:
-    connection = connect_to_db()
-    exists = check_if_user_exist(github_user_id)
-    if connection and not exists:
-        query = "INSERT INTO users (username, github_user_id, access_token, access_token_expires_in, refresh_token, refresh_token_expires_in) VALUES (%s, %s, %s, %s, %s, %s)"
-        params = (username, github_user_id, access_token, access_token_expires_in, refresh_token, refresh_token_expires_in)
-        execute_database_query(query, params)
-    elif connection and exists:
-        query = "UPDATE users SET access_token = %s, access_token_expires_in = %s, refresh_token = %s, refresh_token_expires_in = %s WHERE github_user_id = %s"
-        params = (access_token, access_token_expires_in, refresh_token, refresh_token_expires_in, github_user_id)
-        execute_database_query(query, params)
-
-def check_if_user_exist ( github_user_id: str ) -> bool:
-    connection = connect_to_db()
-    if connection:
-        cursor = connection.cursor()
-        cursor.execute("SELECT * FROM users WHERE github_user_id = %s", (github_user_id, ))
-        row = cursor.fetchone()
-        cursor.close()
-        connection.close()
-        if row != None:
-            return True
-        else:
-            return False
 
 
 # create mindsdb login manager object for managing mindsdb server connections
