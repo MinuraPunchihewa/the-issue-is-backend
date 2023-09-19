@@ -75,11 +75,21 @@ class PostgresDatabaseManager:
         params = (username, github_user_id, access_token, access_token_expires_in, refresh_token, refresh_token_expires_in)
         self._execute_query(query, params)
 
-    def update_user(self, username: str, github_user_id: int, access_token: str, access_token_expires_in: int, refresh_token: str, refresh_token_expires_in: int ) -> None:
+    def update_user(self, github_user_id: int, access_token: str, access_token_expires_in: int, refresh_token: str, refresh_token_expires_in: int ) -> None:
         query = """
             UPDATE users
             SET access_token = %s, access_token_expires_in = %s, refresh_token = %s, refresh_token_expires_in = %s
-            WHERE username = %s AND github_user_id = %s
+            WHERE github_user_id = %s
         """
-        params = (access_token, access_token_expires_in, refresh_token, refresh_token_expires_in, username, github_user_id)
+        params = (access_token, access_token_expires_in, refresh_token, refresh_token_expires_in, github_user_id)
+        self._execute_query(query, params)
+
+    def upsert_user_by_github_user_id(self, username: str, github_user_id: int, access_token: str, access_token_expires_in: int, refresh_token: str, refresh_token_expires_in: int ) -> None:
+        query = """
+            INSERT INTO users (username, github_user_id, access_token, access_token_expires_in, refresh_token, refresh_token_expires_in)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            ON CONFLICT (github_user_id) DO UPDATE
+            SET access_token = %s, access_token_expires_in = %s, refresh_token = %s, refresh_token_expires_in = %s
+        """
+        params = (username, github_user_id, access_token, access_token_expires_in, refresh_token, refresh_token_expires_in, access_token, access_token_expires_in, refresh_token, refresh_token_expires_in)
         self._execute_query(query, params)
