@@ -54,3 +54,16 @@ class GitHubTokenManager:
             raise e
         else:
             return {'login': login, 'id': id}
+        
+    # TODO: is this needed?
+    # def get_jwt_github_token(self):
+    #     PRIVATE_KEY = open(environ.get('PRIVATE_KEY_PATH')).read()
+    #     APP_ID = environ.get('APP_ID')
+    #     now = int(time.time())
+    #     payload = {
+    #         "iat": now,
+    #         "exp": now + (10 * 60),
+    #         "iss": APP_ID
+    #     }
+    #     token = jwt.encode(payload, PRIVATE_KEY, algorithm='RS256')
+    #     return token
