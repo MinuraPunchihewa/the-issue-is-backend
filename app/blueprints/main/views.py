@@ -1,13 +1,13 @@
 import ast
 import logging
-from flask import request, jsonify, current_app
-from app.blueprints.main import main
 from requests.exceptions import HTTPError
+from flask import request, jsonify, current_app
+from flask_jwt_extended import jwt_required, create_access_token
+
+from app.blueprints.main import main
+from app.blueprints.main.github_token_manager import GitHubTokenManager
 from app.blueprints.main.mindsdb_login_manager import MindsDBLoginManager
 from app.blueprints.main.postgres_database_manager import PostgresDatabaseManager
-from app.blueprints.main.github_token_manager import GitHubTokenManager
-from flask_jwt_extended import jwt_required, create_access_token
-import logging
 
 # create mindsdb login manager object for managing mindsdb server connections
 mindsdb_login_manager = MindsDBLoginManager()
