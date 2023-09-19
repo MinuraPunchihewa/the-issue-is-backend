@@ -5,6 +5,7 @@ from app.blueprints.main import main
 from requests.exceptions import HTTPError
 from app.blueprints.main.mindsdb_login_manager import MindsDBLoginManager
 from app.blueprints.main.postgres_database_manager import PostgresDatabaseManager
+from app.blueprints.main.github_token_manager import GitHubTokenManager
 from flask_jwt_extended import jwt_required, create_access_token
 from dotenv import dotenv_values
 from os import environ
@@ -17,19 +18,14 @@ import requests
 
 environ = dotenv_values(".env")
 
+# create mindsdb login manager object for managing mindsdb server connections
+mindsdb_login_manager = MindsDBLoginManager()
+
+# create postgres database manager object for executing database operations
 postgres_database_manager = PostgresDatabaseManager()
 
-def get_jwt_github_token():
-    PRIVATE_KEY = open(environ.get('PRIVATE_KEY_PATH')).read()
-    APP_ID = environ.get('APP_ID')
-    now = int(time.time())
-    payload = {
-        "iat": now,
-        "exp": now + (10 * 60),
-        "iss": APP_ID
-    }
-    token = jwt.encode(payload, PRIVATE_KEY, algorithm='RS256')
-    return token
+# create github token manager object for managing github tokens and user information
+github_token_manager = GitHubTokenManager()
 
 @main.route('/access_token', methods=['POST'])
 def get_access_token():
@@ -41,10 +37,10 @@ def get_access_token():
     
     if code:
         try:
-            access_token, expires_in, refresh_token, refresh_token_expires_in = get_access_token_from_code(code)
+            access_token, expires_in, refresh_token, refresh_token_expires_in = github_token_manager.get_access_token_from_code(code)
             logging.info("Access token retrieved successfully.")
             
-            user_data = get_user_information_from_token(access_token)
+            user_data = github_token_manager.get_user_information_from_token(access_token)
             logging.info("User data retrieved successfully.")
 
             username = user_data.get('login')
@@ -62,58 +58,6 @@ def get_access_token():
             return jsonify({'message': 'An error occurred, please try again later.'}), 500
     else:
         return jsonify({'message': 'Code has not been provided'}), 400
-
-def get_access_token_from_code(code :str) -> dict:
-    """
-    This function retrieves an access token using the provided code by making a POST request to GitHub.
-    """
-    try:
-        url = 'https://github.com/login/oauth/access_token'
-        headers = {'Accept': 'application/json'}
-        data = {
-            'client_id': environ.get('CLIENT_ID'),
-            'client_secret': environ.get('CLIENT_SECRET'),
-            'code': code
-        }
-        response = requests.post(url, headers=headers, data=data)
-        response.raise_for_status()
-
-        response_data = response.json()
-        access_token = response_data.get('access_token')
-        expires_in = response_data.get('expires_in')
-        refresh_token = response_data.get('refresh_token')
-        refresh_token_expires_in = response_data.get('refresh_token_expires_in')
-    except HTTPError as e:
-        logging.error(f"HTTP error occurred: {e}")
-        raise e
-    except Exception as e:
-        logging.error(f"An error occurred: {e}")
-        raise e
-    else:
-        return access_token, expires_in, refresh_token, refresh_token_expires_in
-
-
-def get_user_information_from_token (access_token: str) -> dict:
-    url = 'https://api.github.com/user'
-    headers = {'Authorization': f'bearer {access_token}'}
-    try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        user_data = response.json()
-        login = user_data.get('login')
-        id = user_data.get('id')
-    except HTTPError as e:
-        logging.error(f"HTTP error occurred: {e}")
-        raise e
-    except Exception as e:
-        logging.error(f"An error occurred: {e}")
-        raise e
-    else:
-        return {'login': login, 'id': id}
-
-
-# create mindsdb login manager object for managing mindsdb server connections
-mindsdb_login_manager = MindsDBLoginManager()
     
 
 @main.route('/login', methods=['POST'])
