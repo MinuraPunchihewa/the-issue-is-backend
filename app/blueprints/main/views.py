@@ -1,60 +1,22 @@
 import ast
 import logging
-from flask import request, jsonify, current_app
-from app.blueprints.main import main
 from requests.exceptions import HTTPError
-from app.blueprints.main.mindsdb_login_manager import MindsDBLoginManager
+from flask import request, jsonify, current_app
 from flask_jwt_extended import jwt_required, create_access_token
-from dotenv import dotenv_values
-from os import environ
-import psycopg2
-from psycopg2 import Error
-import logging
-import jwt
-import time
-import requests
 
-environ = dotenv_values(".env")
+from app.blueprints.main import main
+from app.blueprints.main.github_token_manager import GitHubTokenManager
+from app.blueprints.main.mindsdb_login_manager import MindsDBLoginManager
+from app.blueprints.main.postgres_database_manager import PostgresDatabaseManager
 
-DATABASE_HOST = environ.get('DATABASE_HOST')
-DATABASE_USER = environ.get('DATABASE_USER')
-DATABASE_PASSWORD = environ.get('DATABASE_PASSWORD')
-DATABASE_PORT = environ.get('DATABASE_PORT')
-DATABASE_NAME = environ.get('DATABASE_NAME')
+# create mindsdb login manager object for managing mindsdb server connections
+mindsdb_login_manager = MindsDBLoginManager()
 
-def connect_to_db():
-    try:
-        connection = psycopg2.connect(user=DATABASE_USER,
-                                      password=DATABASE_PASSWORD,
-                                      host=DATABASE_HOST,
-                                      port=DATABASE_PORT,
-                                      database=DATABASE_NAME)
-        return connection
-    except (Exception, Error) as error:
-        logging.error("Error while connecting to PostgreSQL: %s", error)
-        return None
+# create postgres database manager object for executing database operations
+postgres_database_manager = PostgresDatabaseManager()
 
-def execute_database_query(query: str, params: tuple) -> None:
-    try:
-        with connect_to_db() as connection:
-            with connection.cursor() as cursor:
-                cursor.execute(query, params)
-                connection.commit()
-    except (Exception, Error) as error:
-        logging.error("Database operation error", error)
-        connection.rollback()
-
-def get_jwt_github_token():
-    PRIVATE_KEY = open(environ.get('PRIVATE_KEY_PATH')).read()
-    APP_ID = environ.get('APP_ID')
-    now = int(time.time())
-    payload = {
-        "iat": now,
-        "exp": now + (10 * 60),
-        "iss": APP_ID
-    }
-    token = jwt.encode(payload, PRIVATE_KEY, algorithm='RS256')
-    return token
+# create github token manager object for managing github tokens and user information
+github_token_manager = GitHubTokenManager()
 
 @main.route('/access_token', methods=['POST'])
 def get_access_token():
@@ -66,15 +28,16 @@ def get_access_token():
     
     if code:
         try:
-            access_token, expires_in, refresh_token, refresh_token_expires_in = get_access_token_from_code(code)
+            access_token, expires_in, refresh_token, refresh_token_expires_in = github_token_manager.get_access_token_from_code(code)
             logging.info("Access token retrieved successfully.")
             
-            user_data = get_user_information_from_token(access_token)
+            user_data = github_token_manager.get_user_information_from_token(access_token)
             logging.info("User data retrieved successfully.")
 
             username = user_data.get('login')
             github_user_id = user_data.get('id')
-            write_to_database(username, github_user_id, access_token, expires_in, refresh_token, refresh_token_expires_in)
+
+            postgres_database_manager.upsert_user_by_github_user_id(username, github_user_id, access_token, expires_in, refresh_token, refresh_token_expires_in)
             logging.info("Stored user data in database successfully")
             
             return jsonify({'message': 'Access token retrieved', 'access_token': access_token, 'username': username}), 200
@@ -86,83 +49,6 @@ def get_access_token():
             return jsonify({'message': 'An error occurred, please try again later.'}), 500
     else:
         return jsonify({'message': 'Code has not been provided'}), 400
-
-def get_access_token_from_code(code :str) -> dict:
-    """
-    This function retrieves an access token using the provided code by making a POST request to GitHub.
-    """
-    try:
-        url = 'https://github.com/login/oauth/access_token'
-        headers = {'Accept': 'application/json'}
-        data = {
-            'client_id': environ.get('CLIENT_ID'),
-            'client_secret': environ.get('CLIENT_SECRET'),
-            'code': code
-        }
-        response = requests.post(url, headers=headers, data=data)
-        response.raise_for_status()
-
-        response_data = response.json()
-        access_token = response_data.get('access_token')
-        expires_in = response_data.get('expires_in')
-        refresh_token = response_data.get('refresh_token')
-        refresh_token_expires_in = response_data.get('refresh_token_expires_in')
-    except HTTPError as e:
-        logging.error(f"HTTP error occurred: {e}")
-        raise e
-    except Exception as e:
-        logging.error(f"An error occurred: {e}")
-        raise e
-    else:
-        return access_token, expires_in, refresh_token, refresh_token_expires_in
-
-
-def get_user_information_from_token (access_token: str) -> dict:
-    url = 'https://api.github.com/user'
-    headers = {'Authorization': f'bearer {access_token}'}
-    try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        user_data = response.json()
-        login = user_data.get('login')
-        id = user_data.get('id')
-    except HTTPError as e:
-        logging.error(f"HTTP error occurred: {e}")
-        raise e
-    except Exception as e:
-        logging.error(f"An error occurred: {e}")
-        raise e
-    else:
-        return {'login': login, 'id': id}
-
-def write_to_database ( username: str, github_user_id: int, access_token: str, access_token_expires_in: int, refresh_token: str, refresh_token_expires_in: int ) -> None:
-    connection = connect_to_db()
-    exists = check_if_user_exist(github_user_id)
-    if connection and not exists:
-        query = "INSERT INTO users (username, github_user_id, access_token, access_token_expires_in, refresh_token, refresh_token_expires_in) VALUES (%s, %s, %s, %s, %s, %s)"
-        params = (username, github_user_id, access_token, access_token_expires_in, refresh_token, refresh_token_expires_in)
-        execute_database_query(query, params)
-    elif connection and exists:
-        query = "UPDATE users SET access_token = %s, access_token_expires_in = %s, refresh_token = %s, refresh_token_expires_in = %s WHERE github_user_id = %s"
-        params = (access_token, access_token_expires_in, refresh_token, refresh_token_expires_in, github_user_id)
-        execute_database_query(query, params)
-
-def check_if_user_exist ( github_user_id: str ) -> bool:
-    connection = connect_to_db()
-    if connection:
-        cursor = connection.cursor()
-        cursor.execute("SELECT * FROM users WHERE github_user_id = %s", (github_user_id, ))
-        row = cursor.fetchone()
-        cursor.close()
-        connection.close()
-        if row != None:
-            return True
-        else:
-            return False
-
-
-# create mindsdb login manager object for managing mindsdb server connections
-mindsdb_login_manager = MindsDBLoginManager()
     
 
 @main.route('/login', methods=['POST'])
