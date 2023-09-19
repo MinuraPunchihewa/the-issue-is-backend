@@ -7,16 +7,7 @@ from app.blueprints.main.mindsdb_login_manager import MindsDBLoginManager
 from app.blueprints.main.postgres_database_manager import PostgresDatabaseManager
 from app.blueprints.main.github_token_manager import GitHubTokenManager
 from flask_jwt_extended import jwt_required, create_access_token
-from dotenv import dotenv_values
-from os import environ
-import psycopg2
-from psycopg2 import Error
 import logging
-import jwt
-import time
-import requests
-
-environ = dotenv_values(".env")
 
 # create mindsdb login manager object for managing mindsdb server connections
 mindsdb_login_manager = MindsDBLoginManager()
