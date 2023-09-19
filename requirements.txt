@@ -4,3 +4,4 @@ waitress
 flask_jwt_extended
 flask-swagger-ui
 python-dotenv
+psycopg2-binary==2.9.7
