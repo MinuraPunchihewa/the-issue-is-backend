@@ -37,7 +37,7 @@ def get_access_token():
             username = user_data.get('login')
             github_user_id = user_data.get('id')
 
-            postgres_database_manager.upsert_user(username, github_user_id, access_token, expires_in, refresh_token, refresh_token_expires_in)
+            postgres_database_manager.upsert_user_by_github_user_id(username, github_user_id, access_token, expires_in, refresh_token, refresh_token_expires_in)
             logging.info("Stored user data in database successfully")
             
             return jsonify({'message': 'Access token retrieved', 'access_token': access_token, 'username': username}), 200
