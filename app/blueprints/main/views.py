@@ -39,7 +39,7 @@ def get_access_token():
             postgres_database_manager.upsert_user_by_github_user_id(username, github_user_id, access_token, expires_in, refresh_token, refresh_token_expires_in)
             logging.info("Stored user data in database successfully")
             
-            return jsonify({'message': 'Access token retrieved', 'access_token': access_token, 'username': username}), 200
+            return jsonify({'message': 'Access token retrieved', 'access_token': access_token, 'username': username, 'user_id': github_user_id}), 200
         except HTTPError as e:
             logging.error(f"HTTP error occurred: {e}")
             return jsonify({'message': 'Access token could not be retrieved, please try again later.'}), 400
@@ -78,6 +78,63 @@ def login():
     else:
         return jsonify({'message': 'Either the login or password has not been provided'}), 400
 
+
+REQUIRED_FIELDS = {'name', 'style', 'user_id', 'sections'}
+SECTION_NAMES = {'has_steps', 'has_impact', 'has_location', 'has_expected', 'has_culprit'}
+
+@main.route('/create_lingo', methods=['POST'])
+def create_lingo():
+    request_data = request.get_json()
+
+    if not request_data:
+        return jsonify({'error': 'No input data provided'}), 400
+
+    missing_fields = REQUIRED_FIELDS - request_data.keys()
+    if missing_fields:
+        return jsonify({'error': f'Missing required fields: {", ".join(missing_fields)}'}), 400
+
+    name = request_data['name']
+    style = request_data['style']
+    github_user_id = request_data['user_id']
+    sections = set(request_data['sections'])
+
+    section_flags = {section_name: section_name in sections for section_name in SECTION_NAMES}
+
+    try:
+        user_data = postgres_database_manager.select_user_by_github_user_id(github_user_id)
+        if not user_data:
+            return jsonify({'error': 'User does not exist.'}), 400
+
+        user_id = user_data['user_id']
+        postgres_database_manager.upsert_lingo_by_github_user_id(
+            user_id, name, style, **section_flags
+        )
+        return jsonify({'message': f'Lingo {name} created'}), 200
+
+    except Exception as e:
+        logging.error(e)
+        return jsonify({'error': f'Lingo could not be created: {str(e)}'}), 400
+
+@main.route('/lingo', methods=['POST'])
+def get_lingos():
+    request_data = request.get_json()
+
+    if not request_data:
+        return jsonify({'error': 'No input data provided'}), 400
+    
+    github_user_id = request_data['user_id']
+
+    try:
+        lingos = postgres_database_manager.select_lingo_by_github_user_id(github_user_id)
+        ## make a list of the lingos 
+        # [{'name': 'loling'}, {'name': 'lollingo'}, {'name': 'lol'}] -> ['loling', 'lollingo', 'lol']
+        lingos = [lingo['name'] for lingo in lingos]
+        return jsonify({'lingos': lingos}), 200
+    
+    except Exception as e:
+        logging.error(e)
+        return jsonify({'error': f'Lingos could not be retrieved: {str(e)}'}), 400
+    
 
 @main.route('/databases', methods=['PUT'])
 @jwt_required()

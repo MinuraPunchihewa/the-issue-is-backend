@@ -59,7 +59,7 @@ class PostgresDatabaseManager:
         
     def select_user_by_github_user_id(self, github_user_id: int) -> dict:
         query = """
-            SELECT username, github_user_id, access_token, access_token_expires_in, refresh_token, refresh_token_expires_in
+            SELECT username, github_user_id, access_token, access_token_expires_in, refresh_token, refresh_token_expires_in, user_id
             FROM users
             WHERE github_user_id = %s
         """
@@ -93,3 +93,22 @@ class PostgresDatabaseManager:
         """
         params = (username, github_user_id, access_token, access_token_expires_in, refresh_token, refresh_token_expires_in, access_token, access_token_expires_in, refresh_token, refresh_token_expires_in)
         self._execute_query(query, params)
+    
+    def upsert_lingo_by_github_user_id(self, github_user_id: int, name: str, style: str, has_steps: bool, has_impact: bool, has_location: bool, has_expected: bool, has_culprit: bool) -> None:
+        query = """
+            INSERT INTO lingos (user_id, name, style, has_steps, has_impact, has_location, has_expected, has_culprit)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        params = (github_user_id, name, style, has_steps, has_impact, has_location, has_expected, has_culprit)
+        self._execute_query(query, params)
+
+    def select_lingo_by_github_user_id(self, github_user_id: int) -> list:
+        query = """
+            SELECT name
+            FROM lingos
+            JOIN users ON users.user_id = lingos.user_id
+            WHERE github_user_id = %s
+        """
+        params = (github_user_id,)
+        result = self._fetch_all(query, params)
+        return result
