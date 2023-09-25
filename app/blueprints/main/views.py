@@ -167,7 +167,7 @@ def create_issue1():
     repository = request_data['repository']
     owner = request_data['owner']
     title = request_data['issueTitle']
-    body = request_data['issueGenerated']
+    body = request_data['issuePreview']
 
     try:
         user = postgres_database_manager.select_user_by_github_user_id(github_user_id)
@@ -179,7 +179,33 @@ def create_issue1():
         logging.error(e)
         return jsonify({'error': f'Issue could not be created: {str(e)}'}), 400
     
-    
+@main.route('/generate_issue', methods=['POST'])
+def generate_issue():
+
+    request_data = request.get_json()
+
+    if not request_data:
+        return jsonify({'error': 'No input data provided'}), 400
+
+    repository = request_data['repository']
+    owner = request_data['owner']
+    title = request_data['issueTitle']
+    description = request_data['issueDescription']
+    lingo = request_data['lingo']
+    user_id = request_data['user_id']
+
+    try:
+
+        lingo_data = postgres_database_manager.select_lingo(user_id, lingo)
+        print(repository, owner, title, description, lingo, user_id)
+        print(lingo_data)
+
+        return jsonify({'issuePreview': 'THIS SHOULD BE THE OUTPUT OF THE MODEL.'}), 200
+
+    except Exception as e:
+        logging.error(e)
+        return jsonify({'error': f'Issue could not be created: {str(e)}'}), 400
+
 
 @main.route('/databases', methods=['PUT'])
 @jwt_required()

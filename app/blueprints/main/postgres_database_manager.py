@@ -122,3 +122,13 @@ class PostgresDatabaseManager:
         params = (github_user_id,)
         result = self._fetch_one(query, params)
         return result
+    def select_lingo(self, github_user_id: int, name: str) -> dict:
+        query = """
+            SELECT name, style, has_steps, has_impact, has_location, has_expected, has_culprit
+            FROM lingos
+            JOIN users ON users.user_id = lingos.user_id
+            WHERE github_user_id = %s AND name = %s
+        """
+        params = (github_user_id, name)
+        result = self._fetch_one(query, params)
+        return result
