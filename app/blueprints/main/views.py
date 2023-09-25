@@ -137,6 +137,7 @@ def get_lingos():
     
 @main.route('/repos', methods=['POST'])
 def get_repos():
+
     request_data = request.get_json()
 
     if not request_data:
@@ -154,7 +155,31 @@ def get_repos():
     except Exception as e:
         logging.error(e)
         return jsonify({'error': f'Repos could not be retrieved: {str(e)}'}), 400
-        
+
+@main.route('/create_issue', methods=['POST'])
+def create_issue1():
+    request_data = request.get_json()
+
+    if not request_data:
+        return jsonify({'error': 'No input data provided'}), 400
+    
+    github_user_id = request_data['user_id']
+    repository = request_data['repository']
+    owner = request_data['owner']
+    title = request_data['issueTitle']
+    body = request_data['issueGenerated']
+
+    try:
+        user = postgres_database_manager.select_user_by_github_user_id(github_user_id)
+        token = user['access_token']
+        issue_url = github_token_manager.create_issue(token, repository, owner, title, body)
+        return jsonify({'message': 'Issue created', 'url': issue_url}), 200
+    
+    except Exception as e:
+        logging.error(e)
+        return jsonify({'error': f'Issue could not be created: {str(e)}'}), 400
+    
+    
 
 @main.route('/databases', methods=['PUT'])
 @jwt_required()

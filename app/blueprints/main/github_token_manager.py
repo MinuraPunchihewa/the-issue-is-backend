@@ -75,6 +75,29 @@ class GitHubTokenManager:
         else:
             return repos
         
+    def create_issue(self, access_token: str, repository: str, owner: str, title: str, body: str):
+        url = f"https://api.github.com/repos/{owner}/{repository}/issues"
+        headers = {'Authorization': f'bearer {access_token}'}
+        data = {
+            'title': title,
+            'body': body
+        }
+
+        try:
+            response = requests.post(url, headers=headers, json=data)
+            response.raise_for_status()
+            issue_data = response.json()
+            issue_url = issue_data.get('url')
+        except HTTPError as e:
+            logging.error(f"HTTP error occurred: {e}")
+            raise e
+        except Exception as e:
+            logging.error(f"An error occurred: {e}")
+            raise e
+        else:
+            return issue_url
+
+        
     # TODO: is this needed?
     # def get_jwt_github_token(self):
     #     PRIVATE_KEY = open(environ.get('PRIVATE_KEY_PATH')).read()
