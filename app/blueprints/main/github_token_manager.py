@@ -55,6 +55,26 @@ class GitHubTokenManager:
         else:
             return {'login': login, 'id': id}
         
+    def get_repos(self, access_token: str, username: str) -> list:
+        url = f"https://api.github.com/users/{username}/repos?per_page=40&type=all"
+        headers = {'Authorization': f'bearer {access_token}'}
+
+        try:
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+            repos_data = response.json()
+            repos = []
+            for repo in repos_data:
+                repos.append({'name': repo.get('name'), 'owner': repo.get('owner').get('login')})
+        except HTTPError as e:
+            logging.error(f"HTTP error occurred: {e}")
+            raise e
+        except Exception as e:
+            logging.error(f"An error occurred: {e}")
+            raise e
+        else:
+            return repos
+        
     # TODO: is this needed?
     # def get_jwt_github_token(self):
     #     PRIVATE_KEY = open(environ.get('PRIVATE_KEY_PATH')).read()

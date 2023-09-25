@@ -135,6 +135,26 @@ def get_lingos():
         logging.error(e)
         return jsonify({'error': f'Lingos could not be retrieved: {str(e)}'}), 400
     
+@main.route('/repos', methods=['POST'])
+def get_repos():
+    request_data = request.get_json()
+
+    if not request_data:
+        return jsonify({'error': 'No input data provided'}), 400
+    
+    github_user_id = request_data['user_id']
+
+    try:
+        user = postgres_database_manager.select_user_by_github_user_id(github_user_id)
+        token = user['access_token']
+        username = user['username']
+        repos = github_token_manager.get_repos(token, username)
+        return jsonify({'repos': repos}), 200
+    
+    except Exception as e:
+        logging.error(e)
+        return jsonify({'error': f'Repos could not be retrieved: {str(e)}'}), 400
+        
 
 @main.route('/databases', methods=['PUT'])
 @jwt_required()

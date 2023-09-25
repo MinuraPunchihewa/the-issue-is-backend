@@ -112,3 +112,13 @@ class PostgresDatabaseManager:
         params = (github_user_id,)
         result = self._fetch_all(query, params)
         return result
+    
+    def select_token_by_github_user_id(self, github_user_id: int) -> dict:
+        query = """
+            SELECT access_token, username
+            FROM users
+            WHERE github_user_id = %s
+        """
+        params = (github_user_id,)
+        result = self._fetch_one(query, params)
+        return result
