@@ -172,8 +172,8 @@ def create_issue1():
     try:
         user = postgres_database_manager.select_user_by_github_user_id(github_user_id)
         token = user['access_token']
-        issue_url = github_token_manager.create_issue(token, repository, owner, title, body)
-        return jsonify({'message': 'Issue created', 'url': issue_url}), 200
+        html_url = github_token_manager.create_issue(token, repository, owner, title, body)
+        return jsonify({'message': 'Issue created', 'html_url': html_url}), 200
     
     except Exception as e:
         logging.error(e)

@@ -87,7 +87,8 @@ class GitHubTokenManager:
             response = requests.post(url, headers=headers, json=data)
             response.raise_for_status()
             issue_data = response.json()
-            issue_url = issue_data.get('url')
+            html_url = issue_data.get('html_url')
+
         except HTTPError as e:
             logging.error(f"HTTP error occurred: {e}")
             raise e
@@ -95,18 +96,5 @@ class GitHubTokenManager:
             logging.error(f"An error occurred: {e}")
             raise e
         else:
-            return issue_url
+            return html_url
 
-        
-    # TODO: is this needed?
-    # def get_jwt_github_token(self):
-    #     PRIVATE_KEY = open(environ.get('PRIVATE_KEY_PATH')).read()
-    #     APP_ID = environ.get('APP_ID')
-    #     now = int(time.time())
-    #     payload = {
-    #         "iat": now,
-    #         "exp": now + (10 * 60),
-    #         "iss": APP_ID
-    #     }
-    #     token = jwt.encode(payload, PRIVATE_KEY, algorithm='RS256')
-    #     return token
