@@ -55,15 +55,46 @@ class GitHubTokenManager:
         else:
             return {'login': login, 'id': id}
         
-    # TODO: is this needed?
-    # def get_jwt_github_token(self):
-    #     PRIVATE_KEY = open(environ.get('PRIVATE_KEY_PATH')).read()
-    #     APP_ID = environ.get('APP_ID')
-    #     now = int(time.time())
-    #     payload = {
-    #         "iat": now,
-    #         "exp": now + (10 * 60),
-    #         "iss": APP_ID
-    #     }
-    #     token = jwt.encode(payload, PRIVATE_KEY, algorithm='RS256')
-    #     return token
+    def get_repos(self, access_token: str, username: str) -> list:
+        url = f"https://api.github.com/users/{username}/repos?per_page=40&type=all"
+        headers = {'Authorization': f'bearer {access_token}'}
+
+        try:
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+            repos_data = response.json()
+            repos = []
+            for repo in repos_data:
+                repos.append({'name': repo.get('name'), 'owner': repo.get('owner').get('login')})
+        except HTTPError as e:
+            logging.error(f"HTTP error occurred: {e}")
+            raise e
+        except Exception as e:
+            logging.error(f"An error occurred: {e}")
+            raise e
+        else:
+            return repos
+        
+    def create_issue(self, access_token: str, repository: str, owner: str, title: str, body: str):
+        url = f"https://api.github.com/repos/{owner}/{repository}/issues"
+        headers = {'Authorization': f'bearer {access_token}'}
+        data = {
+            'title': title,
+            'body': body
+        }
+
+        try:
+            response = requests.post(url, headers=headers, json=data)
+            response.raise_for_status()
+            issue_data = response.json()
+            html_url = issue_data.get('html_url')
+
+        except HTTPError as e:
+            logging.error(f"HTTP error occurred: {e}")
+            raise e
+        except Exception as e:
+            logging.error(f"An error occurred: {e}")
+            raise e
+        else:
+            return html_url
+
