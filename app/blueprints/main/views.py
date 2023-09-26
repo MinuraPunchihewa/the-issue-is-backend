@@ -106,7 +106,7 @@ def create_lingo():
             return jsonify({'error': 'User does not exist.'}), 400
 
         user_id = user_data['user_id']
-        postgres_database_manager.upsert_lingo_by_github_user_id(
+        postgres_database_manager.insert_lingo_by_github_user_id(
             user_id, name, style, **section_flags
         )
         return jsonify({'message': f'Lingo {name} created'}), 200
