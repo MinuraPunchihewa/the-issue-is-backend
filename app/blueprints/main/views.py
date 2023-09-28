@@ -6,6 +6,7 @@ from flask_jwt_extended import jwt_required, create_access_token
 from app.blueprints.main import main
 from app.blueprints.main.github_token_manager import GitHubTokenManager
 from app.blueprints.main.mindsdb_login_manager import MindsDBLoginManager
+from app.blueprints.main.mindsdb_issue_generator import MindsDBIssueGenerator
 from app.blueprints.main.postgres_database_manager import PostgresDatabaseManager
 
 # create mindsdb login manager object for managing mindsdb server connections
@@ -195,12 +196,16 @@ def generate_issue():
     user_id = request_data['user_id']
 
     try:
-
         lingo_data = postgres_database_manager.select_lingo(user_id, lingo)
-        print(repository, owner, title, description, lingo, user_id)
-        print(lingo_data)
+        sections = []
+        for key, value in lingo_data.items():
+            if key.startswith('has_') and value:
+                sections.append(current_app.config['SECTION_NAMES'][key])
 
-        return jsonify({'issuePreview': 'THIS SHOULD BE THE OUTPUT OF THE MODEL.'}), 200
+        mindsdb_issue_generator = MindsDBIssueGenerator()
+        issue_preview = mindsdb_issue_generator.generate_issue(title, description, lingo_data['style'], sections)
+
+        return jsonify({'issuePreview': issue_preview}), 200
 
     except Exception as e:
         logging.error(e)
