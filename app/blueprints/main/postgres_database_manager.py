@@ -128,7 +128,7 @@ class PostgresDatabaseManager:
             SELECT name, style, has_steps, has_impact, has_location, has_expected, has_culprit
             FROM lingos
             JOIN users ON users.user_id = lingos.user_id
-            WHERE users.user_id = %s AND name = %s
+            WHERE users.github_user_id = %s AND name = %s
         """
         params = (github_user_id, name)
         result = self._fetch_one(query, params)

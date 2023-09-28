@@ -188,9 +188,9 @@ def generate_issue():
     if not request_data:
         return jsonify({'error': 'No input data provided'}), 400
 
-    # TODO: do we need the repository and owner? How will they be used?
-    repository = request_data['repository']
-    owner = request_data['owner']
+    # TODO: do we need the repository and owner? How will they be used? For the future we could use them as more context.
+    # repository = request_data['repository']
+    # owner = request_data['owner']
     title = request_data['issueTitle']
     description = request_data['issueDescription']
     lingo = request_data['lingo']
