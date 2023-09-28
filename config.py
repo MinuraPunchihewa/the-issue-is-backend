@@ -11,6 +11,7 @@ class Config(object):
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
     OPENAI_PROMPT_TEMPLATE = """"""
     OPENAI_MAX_TOKENS = 1024
+    SECTION_NAMES = {}
 
 
 # create the development config
@@ -29,6 +30,13 @@ class DevelopmentConfig(Config):
 
     Your response should be a string formatted with markdown syntax. Do not include any other information in your response.
     """
+    SECTION_NAMES = {
+        'has_steps': "Steps to reproduce", 
+        'has_impact': "Impact", 
+        'has_location': "Location", 
+        'has_expected': "Expected behaviour",
+        'has_culprit': "Suspected culprit"
+    }
 
 
 # create the production config
