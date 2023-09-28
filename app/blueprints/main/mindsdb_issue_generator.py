@@ -15,6 +15,15 @@ class MindsDBIssueGenerator:
         self.model = self.project.get_model(name=mindsdb_model or environ['MINDSDB_MODEL'])
 
     def generate_issue(self, title: str, description: str, style: str, sections: list) -> str:
-        pass
+        result_df = self.model.predict(
+            data={
+                'title': title, 
+                'description': description, 
+                'sections': ", ".join(sections), 
+                'style': style
+                }
+        )
+
+        return result_df.iloc[0]['generated_issue']
 
     
