@@ -133,3 +133,11 @@ class PostgresDatabaseManager:
         params = (github_user_id, name)
         result = self._fetch_one(query, params)
         return result
+    
+    def insert_issue(self, github_user_id: int, repository: str, owner: str, issue_url: str):
+        query = """
+            INSERT INTO issues(user_id, repo, owner, issue_url)
+            VALUES (%s, %s, %s, %s)
+        """
+        params = (github_user_id, repository, owner, issue_url)
+        self._execute_query(query, params)
