@@ -8,6 +8,7 @@ from app.blueprints.main.github_token_manager import GitHubTokenManager
 from app.blueprints.main.mindsdb_login_manager import MindsDBLoginManager
 from app.blueprints.main.mindsdb_issue_generator import MindsDBIssueGenerator
 from app.blueprints.main.postgres_database_manager import PostgresDatabaseManager
+from app.blueprints.main.email_sender_manager import EmailSenderManager
 
 # create mindsdb login manager object for managing mindsdb server connections
 mindsdb_login_manager = MindsDBLoginManager()
@@ -17,6 +18,9 @@ postgres_database_manager = PostgresDatabaseManager()
 
 # create github token manager object for managing github tokens and user information
 github_token_manager = GitHubTokenManager()
+
+# create email sender manager object for sending emails
+email_manager = EmailSenderManager()
 
 @main.route('/access_token', methods=['POST'])
 def get_access_token():
@@ -138,24 +142,26 @@ def get_lingos():
     
 @main.route('/repos', methods=['POST'])
 def get_repos():
-
+    jwt = github_token_manager.jws_for_github_app()
     request_data = request.get_json()
+    github_user_id = request_data['user_id']
+    user = postgres_database_manager.select_user_by_github_user_id(github_user_id)
+    print(user)
+    token = user['access_token']
+    
 
     if not request_data:
         return jsonify({'error': 'No input data provided'}), 400
     
-    github_user_id = request_data['user_id']
-
     try:
-        user = postgres_database_manager.select_user_by_github_user_id(github_user_id)
-        token = user['access_token']
-        username = user['username']
-        repos = github_token_manager.get_repos(token, username)
+        repos = github_token_manager.get_installation_repos(jwt, token)
         return jsonify({'repos': repos}), 200
     
     except Exception as e:
         logging.error(e)
         return jsonify({'error': f'Repos could not be retrieved: {str(e)}'}), 400
+
+
 
 @main.route('/create_issue', methods=['POST'])
 def create_issue1():
@@ -439,3 +445,32 @@ def create_issue():
     # else return error
     else:
         return jsonify({'message': 'Access token is invalid'}), 401
+
+
+## Send contact us email endpoint. it recieves the email and the message from the contact us form and sends it to the  team
+@main.route('/contact_us', methods=['POST'])
+def contact_us():
+    request_data = request.get_json()
+
+    if not request_data:
+        return jsonify({'error': 'No input data provided'}), 400
+
+    email = request_data.get('email', ' ')
+    body = request_data.get('body', ' ')
+
+    try:
+        success = email_manager.send_email(
+            "New Message from Contact Form:" + " " + email,  # subject
+            'theissueai@gmail.com',  # sender
+            ['theissueai@gmail.com'],  # recipients
+            body + " " + email,  # text body
+            body + " " + email  # html body
+        )
+        if success:
+            return jsonify({'message': 'Email sent successfully'}), 200
+        else:
+            raise Exception("Failed to send email via EmailSenderManager")
+
+    except Exception as e:
+        logging.error(e)
+        return jsonify({'error': f'Email could not be sent: {str(e)}'}), 400
