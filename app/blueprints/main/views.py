@@ -180,7 +180,9 @@ def create_issue1():
         user = postgres_database_manager.select_user_by_github_user_id(github_user_id)
         token = user['access_token']
         html_url = github_token_manager.create_issue(token, repository, owner, title, body)
-        postgres_database_manager.insert_issue(github_user_id, repository, owner, html_url)
+
+        user_id = user['user_id']
+        postgres_database_manager.insert_issue(user_id, repository, owner, html_url)
 
         return jsonify({'message': 'Issue created', 'html_url': html_url}), 200
     
