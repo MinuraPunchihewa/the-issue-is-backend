@@ -183,6 +183,7 @@ def create_issue1():
 
         user_id = user['user_id']
         postgres_database_manager.insert_issue(user_id, repository, owner, html_url)
+        postgres_database_manager.update_user_stats(user_id, True, True)
 
         return jsonify({'message': 'Issue created', 'html_url': html_url}), 200
     
