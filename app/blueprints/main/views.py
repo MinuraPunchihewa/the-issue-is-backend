@@ -214,6 +214,13 @@ def generate_issue():
     github_user_id = request_data['user_id']
 
     try:
+        user = postgres_database_manager.select_user_by_github_user_id(github_user_id)
+        user_id = user['user_id']
+    except Exception as e:
+        logging.error(e)
+        return jsonify({'error': f'User does not exist: {str(e)}'}), 400
+
+    try:
         lingo_data = postgres_database_manager.select_lingo(github_user_id, lingo)
         sections = []
         for key, value in lingo_data.items():
@@ -223,14 +230,13 @@ def generate_issue():
         mindsdb_issue_generator = MindsDBIssueGenerator()
         issue_preview = mindsdb_issue_generator.generate_issue(title, description, lingo_data['style'], sections)
 
-        user = postgres_database_manager.select_user_by_github_user_id(github_user_id)
-        user_id = user['user_id']
         postgres_database_manager.update_user_stats(user_id, False, True)
 
         return jsonify({'issuePreview': issue_preview}), 200
 
     except Exception as e:
         logging.error(e)
+        postgres_database_manager.update_user_stats(user_id, False, False)
         return jsonify({'error': f'Issue could not be created: {str(e)}'}), 400
 
 
