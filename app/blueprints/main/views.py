@@ -217,6 +217,10 @@ def generate_issue():
         mindsdb_issue_generator = MindsDBIssueGenerator()
         issue_preview = mindsdb_issue_generator.generate_issue(title, description, lingo_data['style'], sections)
 
+        user = postgres_database_manager.select_user_by_github_user_id(github_user_id)
+        user_id = user['user_id']
+        postgres_database_manager.update_user_stats(user_id, False, True)
+
         return jsonify({'issuePreview': issue_preview}), 200
 
     except Exception as e:
