@@ -205,10 +205,10 @@ def generate_issue():
     title = request_data['issueTitle']
     description = request_data['issueDescription']
     lingo = request_data['lingo']
-    user_id = request_data['user_id']
+    github_user_id = request_data['user_id']
 
     try:
-        lingo_data = postgres_database_manager.select_lingo(user_id, lingo)
+        lingo_data = postgres_database_manager.select_lingo(github_user_id, lingo)
         sections = []
         for key, value in lingo_data.items():
             if key.startswith('has_') and value:
