@@ -134,10 +134,21 @@ class PostgresDatabaseManager:
         result = self._fetch_one(query, params)
         return result
     
-    def insert_issue(self, github_user_id: int, repository: str, owner: str, issue_url: str):
+    def insert_issue(self, user_id: int, repository: str, owner: str, issue_url: str):
         query = """
             INSERT INTO issues(user_id, repo, owner, issue_url)
             VALUES (%s, %s, %s, %s)
         """
-        params = (github_user_id, repository, owner, issue_url)
+        params = (user_id, repository, owner, issue_url)
+        self._execute_query(query, params)
+
+    def update_user_stats(self, user_id: int, is_creation: bool, is_success: bool):
+        column = ('succ' if is_success else 'fail') + ('_cre' if is_creation else '_gen') + '_cnt'
+
+        query = f"""
+            UPDATE users
+            SET {column} = {column} + 1
+            WHERE user_id = %s
+        """
+        params = (user_id,)
         self._execute_query(query, params)

@@ -178,16 +178,23 @@ def create_issue1():
 
     try:
         user = postgres_database_manager.select_user_by_github_user_id(github_user_id)
+        user_id = user['user_id']
+    except Exception as e:
+        logging.error(e)
+        return jsonify({'error': f'User does not exist: {str(e)}'}), 400
+
+    try:
         token = user['access_token']
         html_url = github_token_manager.create_issue(token, repository, owner, title, body)
 
-        user_id = user['user_id']
         postgres_database_manager.insert_issue(user_id, repository, owner, html_url)
+        postgres_database_manager.update_user_stats(user_id, True, True)
 
         return jsonify({'message': 'Issue created', 'html_url': html_url}), 200
     
     except Exception as e:
         logging.error(e)
+        postgres_database_manager.update_user_stats(user_id, True, False)
         return jsonify({'error': f'Issue could not be created: {str(e)}'}), 400
     
 @main.route('/generate_issue', methods=['POST'])
@@ -204,10 +211,17 @@ def generate_issue():
     title = request_data['issueTitle']
     description = request_data['issueDescription']
     lingo = request_data['lingo']
-    user_id = request_data['user_id']
+    github_user_id = request_data['user_id']
 
     try:
-        lingo_data = postgres_database_manager.select_lingo(user_id, lingo)
+        user = postgres_database_manager.select_user_by_github_user_id(github_user_id)
+        user_id = user['user_id']
+    except Exception as e:
+        logging.error(e)
+        return jsonify({'error': f'User does not exist: {str(e)}'}), 400
+
+    try:
+        lingo_data = postgres_database_manager.select_lingo(github_user_id, lingo)
         sections = []
         for key, value in lingo_data.items():
             if key.startswith('has_') and value:
@@ -216,10 +230,13 @@ def generate_issue():
         mindsdb_issue_generator = MindsDBIssueGenerator()
         issue_preview = mindsdb_issue_generator.generate_issue(title, description, lingo_data['style'], sections)
 
+        postgres_database_manager.update_user_stats(user_id, False, True)
+
         return jsonify({'issuePreview': issue_preview}), 200
 
     except Exception as e:
         logging.error(e)
+        postgres_database_manager.update_user_stats(user_id, False, False)
         return jsonify({'error': f'Issue could not be created: {str(e)}'}), 400
 
 
