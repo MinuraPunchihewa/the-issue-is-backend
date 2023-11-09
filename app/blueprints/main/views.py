@@ -1,7 +1,7 @@
 import logging
 from requests.exceptions import HTTPError
 from flask import request, jsonify, current_app
-from flask_jwt_extended import jwt_required, create_access_token
+from flask_jwt_extended import create_access_token
 
 from app.blueprints.main import main
 from app.blueprints.main.github_token_manager import GitHubTokenManager
@@ -10,7 +10,7 @@ from app.blueprints.main.mindsdb_issue_generator import MindsDBIssueGenerator
 from app.blueprints.main.postgres_database_manager import PostgresDatabaseManager
 from app.blueprints.main.email_sender_manager import EmailSenderManager
 
-# create mindsdb login manager object for managing mindsdb server connections
+# create mindsdb login manager object for managing mindsdb logins
 mindsdb_login_manager = MindsDBLoginManager()
 
 # create postgres database manager object for executing database operations
@@ -120,6 +120,7 @@ def create_lingo():
         logging.error(e)
         return jsonify({'error': f'Lingo could not be created: {str(e)}'}), 400
 
+
 @main.route('/lingo', methods=['POST'])
 def get_lingos():
     request_data = request.get_json()
@@ -162,7 +163,6 @@ def get_repos():
         return jsonify({'error': f'Repos could not be retrieved: {str(e)}'}), 400
 
 
-
 @main.route('/create_issue', methods=['POST'])
 def create_issue1():
     request_data = request.get_json()
@@ -197,6 +197,7 @@ def create_issue1():
         postgres_database_manager.update_user_stats(user_id, True, False)
         return jsonify({'error': f'Issue could not be created: {str(e)}'}), 400
     
+
 @main.route('/generate_issue', methods=['POST'])
 def generate_issue():
 
