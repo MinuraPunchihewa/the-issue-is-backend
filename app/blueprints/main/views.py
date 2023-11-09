@@ -84,9 +84,6 @@ def login():
         return jsonify({'message': 'Either the login or password has not been provided'}), 400
 
 
-REQUIRED_FIELDS = {'name', 'style', 'user_id', 'sections'}
-SECTION_NAMES = {'has_steps', 'has_impact', 'has_location', 'has_expected', 'has_culprit'}
-
 @main.route('/create_lingo', methods=['POST'])
 def create_lingo():
     request_data = request.get_json()
@@ -94,7 +91,7 @@ def create_lingo():
     if not request_data:
         return jsonify({'error': 'No input data provided'}), 400
 
-    missing_fields = REQUIRED_FIELDS - request_data.keys()
+    missing_fields = current_app.config['LINGO_REQUIRED_FIELDS'] - request_data.keys()
     if missing_fields:
         return jsonify({'error': f'Missing required fields: {", ".join(missing_fields)}'}), 400
 
@@ -103,7 +100,7 @@ def create_lingo():
     github_user_id = request_data['user_id']
     sections = set(request_data['sections'])
 
-    section_flags = {section_name: section_name in sections for section_name in SECTION_NAMES}
+    section_flags = {section_name: section_name in sections for section_name in current_app.config['ISSUE_SECTION_NAMES']}
 
     try:
         user_data = postgres_database_manager.select_user_by_github_user_id(github_user_id)
@@ -226,7 +223,7 @@ def generate_issue():
         sections = []
         for key, value in lingo_data.items():
             if key.startswith('has_') and value:
-                sections.append(current_app.config['SECTION_NAMES'][key])
+                sections.append(current_app.config['ISSUE_SECTION_NAME_MAPPING'][key])
 
         mindsdb_issue_generator = MindsDBIssueGenerator()
         issue_preview = mindsdb_issue_generator.generate_issue(title, description, lingo_data['style'], sections)
