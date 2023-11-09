@@ -30,12 +30,27 @@ class DevelopmentConfig(Config):
 
     Your response should be a string formatted with markdown syntax. Do not include any other information in your response.
     """
-    SECTION_NAMES = {
+    ISSUE_SECTION_NAMES = {
+        'has_steps',
+        'has_impact',
+        'has_location',
+        'has_expected',
+        'has_culprit'
+    }
+    
+    ISSUE_SECTION_NAME_MAPPING = {
         'has_steps': "Steps to reproduce", 
         'has_impact': "Impact", 
         'has_location': "Location", 
         'has_expected': "Expected behaviour",
         'has_culprit': "Suspected culprit"
+    }
+
+    LINGO_REQUIRED_FIELDS = {
+        'name',
+        'style',
+        'user_id',
+        'sections'
     }
 
 
