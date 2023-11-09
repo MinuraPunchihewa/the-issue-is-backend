@@ -1,7 +1,6 @@
 import logging
 import mindsdb_sdk
 from requests.exceptions import HTTPError
-from flask_jwt_extended import get_jwt_identity
 
 
 class MindsDBLoginManager:
