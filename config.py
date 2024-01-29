@@ -1,14 +1,12 @@
 import os
 # uncomment the lines below if you want to use .env file
-# from dotenv import load_dotenv
+from dotenv import dotenv_values
 
-# load_dotenv()
-
+environ = dotenv_values(".env")
 
 # create the base config
 class Config(object):
-    SECRET_KEY = os.environ.get('SECRET_KEY')
-    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
+    SECRET_KEY = environ.get('SECRET_KEY')
     OPENAI_PROMPT_TEMPLATE = """"""
     OPENAI_MAX_TOKENS = 1024
     SECTION_NAMES = {}
