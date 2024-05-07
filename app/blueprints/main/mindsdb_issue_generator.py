@@ -13,7 +13,7 @@ class MindsDBIssueGenerator:
         )
         self.model = model or environ.get('MDB_INFERENCE_API_MODEL')
 
-    def generate_issue(self, system_prompt: str, title: str, description: str, style: str, sections: list) -> str:
+    def generate_issue(self, system_prompt: str, title: str, description: str, style: str, sections: list, temperature: int = 0.1) -> str:
         respone = self.mindsdb_inference_client.chat.completions.create(
             messages=[
                 {
@@ -22,7 +22,9 @@ class MindsDBIssueGenerator:
                 },
                 {"role": "user", "content": "Title: '{title}', Description: '{description}'".format(title=title, description=description)}
             ],
-            model=self.model
+            model=self.model,
+            stream=False,
+            temperature=temperature
         )
 
         return respone.choices[0].message.content
