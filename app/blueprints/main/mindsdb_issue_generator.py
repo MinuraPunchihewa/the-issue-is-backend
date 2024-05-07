@@ -1,3 +1,5 @@
+import time
+import logging
 from dotenv import dotenv_values
 from app.blueprints.main.mindsdb_connection_manager import MindsDBConnectionManager
 
@@ -14,6 +16,7 @@ class MindsDBIssueGenerator:
         self.model = model or environ.get('MDB_INFERENCE_API_MODEL')
 
     def generate_issue(self, system_prompt: str, title: str, description: str, style: str, sections: list, temperature: int = 0.1) -> str:
+        start = time.time()
         respone = self.mindsdb_inference_client.chat.completions.create(
             messages=[
                 {
@@ -26,6 +29,9 @@ class MindsDBIssueGenerator:
             stream=False,
             temperature=temperature
         )
+        end = time.time()
+
+        logging.info(f"Time taken to generate issue: {end - start} seconds")
 
         return respone.choices[0].message.content
 
