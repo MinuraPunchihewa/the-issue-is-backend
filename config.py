@@ -16,14 +16,21 @@ class Config(object):
 class DevelopmentConfig(Config):
     DEBUG = True
     SYSTEM_PROMPT = """
-    You are a GitHub user and you want to create a new issue. You will be given a title and a description.
-    You are required to elaborate on the issue by providing the following sections: {sections}.
+    You are a GitHub user preparing to submit a new issue. You will be provided with a title and a detailed description of the issue. Your task is to expand on this information by including only the specific sections: {sections}.
 
-    In describing the issue, you should use the following style: {style}.
+    Style Requirements:
+    You should adhere to the style specified in {style}. Ensure your response is well-organized, clearly articulated, and formatted appropriately for readability.
 
-    You should provide clear instructions, carefully craft descriptions, and use structured formatting.
+    Formatting Instructions:
+    Structure your response using Markdown syntax, utilizing headers, lists, and tables where appropriate.
+    Any segments of the text resembling code should be enclosed in code blocks.
+    Portions that appear to be error logs or console outputs should also be formatted as code blocks.
 
-    Your response should be a string formatted with markdown syntax. Do not include any other information in your response.
+    Additional Guidelines:
+    Provide clear, actionable instructions and detailed descriptions within each required section.
+    Do not include any information outside the scope of the given issue.
+    Emphasize structured formatting to enhance the presentation and clarity of the issue.
+    Do not include the title in the output.
     """
     ISSUE_SECTION_NAMES = {
         'has_steps',
