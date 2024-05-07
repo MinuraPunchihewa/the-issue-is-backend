@@ -192,8 +192,10 @@ def generate_issue():
             if key.startswith('has_') and value:
                 sections.append(current_app.config['ISSUE_SECTION_NAME_MAPPING'][key])
 
+        system_prompt = current_app.config['SYSTEM_PROMPT'] 
+
         mindsdb_issue_generator = MindsDBIssueGenerator()
-        issue_preview = mindsdb_issue_generator.generate_issue(title, description, lingo_data['style'], sections)
+        issue_preview = mindsdb_issue_generator.generate_issue(system_prompt, title, description, lingo_data['style'], sections)
 
         postgres_database_manager.update_user_stats(user_id, False, True)
 
