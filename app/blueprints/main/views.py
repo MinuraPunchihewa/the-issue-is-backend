@@ -1,17 +1,12 @@
 import logging
 from requests.exceptions import HTTPError
 from flask import request, jsonify, current_app
-from flask_jwt_extended import create_access_token
 
 from app.blueprints.main import main
 from app.blueprints.main.github_token_manager import GitHubTokenManager
-from app.blueprints.main.mindsdb_login_manager import MindsDBLoginManager
 from app.blueprints.main.mindsdb_issue_generator import MindsDBIssueGenerator
 from app.blueprints.main.postgres_database_manager import PostgresDatabaseManager
 from app.blueprints.main.email_sender_manager import EmailSenderManager
-
-# create mindsdb login manager object for managing mindsdb logins
-mindsdb_login_manager = MindsDBLoginManager()
 
 # create postgres database manager object for executing database operations
 postgres_database_manager = PostgresDatabaseManager()
@@ -53,35 +48,6 @@ def get_access_token():
             return jsonify({'message': 'An error occurred, please try again later.'}), 500
     else:
         return jsonify({'message': 'Code has not been provided'}), 400
-    
-
-@main.route('/login', methods=['POST'])
-def login():
-    # if request is json, get data from json
-    if request.is_json:
-        request_data = request.get_json()
-        login = request_data.get('login')
-        password = request_data.get('password')
-
-    # else get data from form
-    else:
-        login = request.form.get('login')
-        password = request.form.get('password')
-
-    # if login and password are not empty, try to connect
-    if login and password:
-        # if login is successful, return access token
-        if mindsdb_login_manager.login(login=login, password=password):
-            access_token = create_access_token(identity=login)
-            return jsonify({'message': 'Login successful', 'access_token': access_token}), 200
-        
-        # else return error
-        else:
-            return jsonify({'message': 'Login unsuccessful'}), 401
-
-    # else return error
-    else:
-        return jsonify({'message': 'Either the login or password has not been provided'}), 400
 
 
 @main.route('/create_lingo', methods=['POST'])
@@ -138,6 +104,7 @@ def get_lingos():
         logging.error(e)
         return jsonify({'error': f'Lingos could not be retrieved: {str(e)}'}), 400
     
+
 @main.route('/repos', methods=['POST'])
 def get_repos():
     jwt = github_token_manager.jws_for_github_app()
