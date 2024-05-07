@@ -7,11 +7,11 @@ environ = dotenv_values(".env")
 class MindsDBIssueGenerator:
     def __init__(self, base_url: str = None, organization: str = None, api_key: str = None, model: str = None) -> None:
         self.mindsdb_inference_client = MindsDBConnectionManager.connect(
-            base_url=base_url or environ.get('MINDSDB_BASE_URL'),
-            organization=organization or environ.get('MINDSDB_ORGANIZATION'),
-            api_key=api_key or environ.get('MINDSDB_API_KEY')
+            base_url=base_url or environ.get('MDB_INFERENCE_API_BASE_URL'),
+            organization=organization or environ.get('MDB_INFERENCE_API_ORGANIZATION'),
+            api_key=api_key or environ.get('MDB_INFERENCE_API_KEY')
         )
-        self.model = self.mindsdb_inference_client.models.get(model or environ.get('MINDSDB_MODEL'))
+        self.model = self.mindsdb_inference_client.models.get(model or environ.get('MDB_INFERENCE_API_MODEL'))
 
     def generate_issue(self, system_prompt: str, title: str, description: str, style: str, sections: list) -> str:
         respone = self.mindsdb_inference_client.chat.completions.create(
