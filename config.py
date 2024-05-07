@@ -7,24 +7,21 @@ environ = dotenv_values(".env")
 # create the base config
 class Config(object):
     SECRET_KEY = environ.get('SECRET_KEY')
-    OPENAI_PROMPT_TEMPLATE = """"""
-    OPENAI_MAX_TOKENS = 1024
+    SYSTEM_PROMPT = """"""
+    MAX_TOKENS = 1024
     SECTION_NAMES = {}
 
 
 # create the development config
 class DevelopmentConfig(Config):
     DEBUG = True
-    OPENAI_PROMPT_TEMPLATE = """
+    SYSTEM_PROMPT = """
     You are a GitHub user and you want to create a new issue. You will be given a title and a description.
-    You are required to elaborate on the issue by providing the following sections: {{sections}}.
+    You are required to elaborate on the issue by providing the following sections: {sections}.
 
-    In describing the issue, you should use the following style: {{style}}.
+    In describing the issue, you should use the following style: {style}.
 
     You should provide clear instructions, carefully craft descriptions, and use structured formatting.
-
-    Title: '{{title}}'
-    Description: '{{description}}'
 
     Your response should be a string formatted with markdown syntax. Do not include any other information in your response.
     """
@@ -54,9 +51,9 @@ class DevelopmentConfig(Config):
 
 # create the production config
 class ProductionConfig(Config):
-    OPENAI_PROMPT_TEMPLATE = """"""
+    SYSTEM_PROMPT = """"""
 
 
 # create the testing config
 class TestingConfig(Config):
-    OPENAI_PROMPT_TEMPLATE = """"""
+    SYSTEM_PROMPT = """"""
