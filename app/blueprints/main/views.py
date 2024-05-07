@@ -95,8 +95,6 @@ def get_lingos():
 
     try:
         lingos = postgres_database_manager.select_lingo_by_github_user_id(github_user_id)
-        ## make a list of the lingos 
-        # [{'name': 'loling'}, {'name': 'lollingo'}, {'name': 'lol'}] -> ['loling', 'lollingo', 'lol']
         lingos = [lingo['name'] for lingo in lingos]
         return jsonify({'lingos': lingos}), 200
     
@@ -128,7 +126,7 @@ def get_repos():
 
 
 @main.route('/create_issue', methods=['POST'])
-def create_issue1():
+def create_issue():
     request_data = request.get_json()
 
     if not request_data:
