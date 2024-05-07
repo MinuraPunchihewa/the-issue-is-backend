@@ -4,7 +4,7 @@ from openai import OpenAI, AuthenticationError
 
 class MindsDBConnectionManager:
     @staticmethod
-    def connect(base_url, organization, api_key):
+    def connect(base_url: str, organization: str, api_key: str) -> OpenAI:
         try:
             # connect to mindsdb inference API
             mindsdb_inference_client = OpenAI(
@@ -13,6 +13,7 @@ class MindsDBConnectionManager:
                 api_key=api_key
             )
 
+            # list models to check if credentials are valid
             mindsdb_inference_client.models.list()
             return mindsdb_inference_client
         except AuthenticationError as e:
