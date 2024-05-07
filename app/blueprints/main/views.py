@@ -202,7 +202,7 @@ def generate_issue():
     except Exception as e:
         logging.error(e)
         postgres_database_manager.update_user_stats(user_id, False, False)
-        return jsonify({'error': f'Issue could not be created: {str(e)}'}), 400
+        return jsonify({'error': f'Issue preview could not be generated: {str(e)}'}), 400
 
 
 ## Send contact us email endpoint. it recieves the email and the message from the contact us form and sends it to the  team
