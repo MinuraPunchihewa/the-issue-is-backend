@@ -1,5 +1,5 @@
 flask
-mindsdb_sdk
+openai
 waitress
 flask_jwt_extended
 flask-swagger-ui
