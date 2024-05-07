@@ -1,17 +1,12 @@
 import logging
 from requests.exceptions import HTTPError
 from flask import request, jsonify, current_app
-from flask_jwt_extended import create_access_token
 
 from app.blueprints.main import main
 from app.blueprints.main.github_token_manager import GitHubTokenManager
-from app.blueprints.main.mindsdb_login_manager import MindsDBLoginManager
 from app.blueprints.main.mindsdb_issue_generator import MindsDBIssueGenerator
 from app.blueprints.main.postgres_database_manager import PostgresDatabaseManager
 from app.blueprints.main.email_sender_manager import EmailSenderManager
-
-# create mindsdb login manager object for managing mindsdb logins
-mindsdb_login_manager = MindsDBLoginManager()
 
 # create postgres database manager object for executing database operations
 postgres_database_manager = PostgresDatabaseManager()
@@ -53,35 +48,6 @@ def get_access_token():
             return jsonify({'message': 'An error occurred, please try again later.'}), 500
     else:
         return jsonify({'message': 'Code has not been provided'}), 400
-    
-
-@main.route('/login', methods=['POST'])
-def login():
-    # if request is json, get data from json
-    if request.is_json:
-        request_data = request.get_json()
-        login = request_data.get('login')
-        password = request_data.get('password')
-
-    # else get data from form
-    else:
-        login = request.form.get('login')
-        password = request.form.get('password')
-
-    # if login and password are not empty, try to connect
-    if login and password:
-        # if login is successful, return access token
-        if mindsdb_login_manager.login(login=login, password=password):
-            access_token = create_access_token(identity=login)
-            return jsonify({'message': 'Login successful', 'access_token': access_token}), 200
-        
-        # else return error
-        else:
-            return jsonify({'message': 'Login unsuccessful'}), 401
-
-    # else return error
-    else:
-        return jsonify({'message': 'Either the login or password has not been provided'}), 400
 
 
 @main.route('/create_lingo', methods=['POST'])
@@ -129,8 +95,6 @@ def get_lingos():
 
     try:
         lingos = postgres_database_manager.select_lingo_by_github_user_id(github_user_id)
-        ## make a list of the lingos 
-        # [{'name': 'loling'}, {'name': 'lollingo'}, {'name': 'lol'}] -> ['loling', 'lollingo', 'lol']
         lingos = [lingo['name'] for lingo in lingos]
         return jsonify({'lingos': lingos}), 200
     
@@ -138,6 +102,7 @@ def get_lingos():
         logging.error(e)
         return jsonify({'error': f'Lingos could not be retrieved: {str(e)}'}), 400
     
+
 @main.route('/repos', methods=['POST'])
 def get_repos():
     jwt = github_token_manager.jws_for_github_app()
@@ -161,7 +126,7 @@ def get_repos():
 
 
 @main.route('/create_issue', methods=['POST'])
-def create_issue1():
+def create_issue():
     request_data = request.get_json()
 
     if not request_data:
@@ -225,8 +190,10 @@ def generate_issue():
             if key.startswith('has_') and value:
                 sections.append(current_app.config['ISSUE_SECTION_NAME_MAPPING'][key])
 
+        system_prompt = current_app.config['SYSTEM_PROMPT'] 
+
         mindsdb_issue_generator = MindsDBIssueGenerator()
-        issue_preview = mindsdb_issue_generator.generate_issue(title, description, lingo_data['style'], sections)
+        issue_preview = mindsdb_issue_generator.generate_issue(system_prompt, title, description, lingo_data['style'], sections)
 
         postgres_database_manager.update_user_stats(user_id, False, True)
 
@@ -235,7 +202,7 @@ def generate_issue():
     except Exception as e:
         logging.error(e)
         postgres_database_manager.update_user_stats(user_id, False, False)
-        return jsonify({'error': f'Issue could not be created: {str(e)}'}), 400
+        return jsonify({'error': f'Issue preview could not be generated: {str(e)}'}), 400
 
 
 ## Send contact us email endpoint. it recieves the email and the message from the contact us form and sends it to the  team

@@ -1,29 +1,38 @@
-import mindsdb_sdk
+import time
+import logging
 from dotenv import dotenv_values
+from app.blueprints.main.mindsdb_connection_manager import MindsDBConnectionManager
 
 environ = dotenv_values(".env")
 
 
 class MindsDBIssueGenerator:
-    def __init__(self, mindsdb_login: str = None, mindsdb_password: str = None, mindsdb_project: str = None, mindsdb_model: str = None) -> None:
-        self.server = mindsdb_sdk.connect(
-            login=mindsdb_login or environ['MINDSDB_LOGIN'], 
-            password=mindsdb_password or environ['MINDSDB_PASSWORD']
+    def __init__(self, base_url: str = None, organization: str = None, api_key: str = None, model: str = None) -> None:
+        self.mindsdb_inference_client = MindsDBConnectionManager.connect(
+            base_url=base_url or environ.get('MDB_INFERENCE_API_BASE_URL'),
+            organization=organization or environ.get('MDB_INFERENCE_API_ORGANIZATION'),
+            api_key=api_key or environ.get('MDB_INFERENCE_API_KEY')
         )
+        self.model = model or environ.get('MDB_INFERENCE_API_MODEL')
 
-        self.project = self.server.get_project(name=mindsdb_project or environ['MINDSDB_PROJECT'])
-        self.model = self.project.get_model(name=mindsdb_model or environ['MINDSDB_MODEL'])
-
-    def generate_issue(self, title: str, description: str, style: str, sections: list) -> str:
-        result_df = self.model.predict(
-            data={
-                'title': title, 
-                'description': description, 
-                'sections': ", ".join(sections), 
-                'style': style
-                }
+    def generate_issue(self, system_prompt: str, title: str, description: str, style: str, sections: list, temperature: int = 0.1) -> str:
+        start = time.time()
+        respone = self.mindsdb_inference_client.chat.completions.create(
+            messages=[
+                {
+                    "role": "system",
+                    "content": system_prompt.format(sections=", ".join(sections), style=style)
+                },
+                {"role": "user", "content": "Title: '{title}', Description: '{description}'".format(title=title, description=description)}
+            ],
+            model=self.model,
+            stream=False,
+            temperature=temperature
         )
+        end = time.time()
 
-        return result_df.iloc[0]['generated_issue']
+        logging.info(f"Time taken to generate issue: {end - start} seconds")
+
+        return respone.choices[0].message.content
 
     
