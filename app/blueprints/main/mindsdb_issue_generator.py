@@ -11,7 +11,7 @@ class MindsDBIssueGenerator:
             organization=organization or environ.get('MDB_INFERENCE_API_ORGANIZATION'),
             api_key=api_key or environ.get('MDB_INFERENCE_API_KEY')
         )
-        self.model = self.mindsdb_inference_client.models.get(model or environ.get('MDB_INFERENCE_API_MODEL'))
+        self.model = model or environ.get('MDB_INFERENCE_API_MODEL')
 
     def generate_issue(self, system_prompt: str, title: str, description: str, style: str, sections: list) -> str:
         respone = self.mindsdb_inference_client.chat.completions.create(
